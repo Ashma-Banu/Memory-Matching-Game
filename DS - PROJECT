@@ -1,0 +1,163 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <time.h> // Required for shuffling
+// Structure to represent a node in the linked list
+struct Node {
+    int data;
+    struct Node* next;
+};
+// Function prototypes
+void insertAtEnd(struct Node** headRef, int data);
+void shuffle(struct Node** headRef);
+void playMemoryMatchingGame(struct Node* head);
+void displayBoard(struct Node* head);
+void freeList(struct Node* head);
+// Function to insert a new node at the end of the linked list
+void insertAtEnd(struct Node** headRef, int data) {
+    struct Node* newNode = (struct Node*)malloc(sizeof(struct Node));
+    if (newNode == NULL) {
+        printf("Memory allocation failed.\n");
+        exit(1);
+    }
+    newNode->data = data;
+    newNode->next = NULL;
+    if (*headRef == NULL) {
+        *headRef = newNode;
+    } else {
+        struct Node* current = *headRef;
+        while (current->next != NULL) {
+            current = current->next;
+        }
+        current->next = newNode;
+    }
+}
+// Function to shuffle the linked list
+void shuffle(struct Node** headRef) {
+    struct Node* current = *headRef;
+    int count = 0;
+    while (current != NULL) {
+        count++;
+        current = current->next;
+	}
+    int* values = (int*)malloc(count * sizeof(int));
+    if (values == NULL) {
+        printf("Memory allocation failed.\n");
+        exit(1);
+	}
+    current = *headRef;
+    int i = 0;
+    while (current != NULL) {
+        values[i++] = current->data;
+        current = current->next;
+	}
+    // Shuffle the values using Fisher-Yates algorithm
+    srand(time(NULL));
+    for (i = count - 1; i > 0; i--) {
+        int j = rand() % (i + 1);
+        int temp = values[i];
+        values[i] = values[j];
+        values[j] = temp;
+	}
+    // Update the linked list with shuffled values
+    i = 0;
+    current = *headRef;
+    while (current != NULL) {
+        current->data = values[i++];
+        current = current->next;
+	}
+    free(values);
+}
+void displayBoard(struct Node* head) {
+    struct Node* current = head;
+    while (current != NULL) {
+        printf("[%d] ", current->data);
+        current = current->next;
+    }
+    printf("\n");
+}
+// Function to play the memory matching game
+void playMemoryMatchingGame(struct Node* head) {
+    int attempts = 0;
+    int pairsFound = 0;
+    int size = 0;
+    // Count the number of nodes in the linked list
+    struct Node* current = head;
+    while (current != NULL) {
+        size++;
+        current = current->next;
+    }
+    // Array to track matched nodes
+    int* matched = (int*)calloc(size, sizeof(int));
+    if (matched == NULL) {
+        printf("Memory allocation failed.\n");
+        exit(1);
+	}
+    // Game loop
+    while (pairsFound < size / 2) {
+        // Display current state of the game board
+        printf("Attempts: %d\n", attempts);
+        displayBoard(head);
+        // Prompt player for input
+        int firstIndex, secondIndex;
+        printf("Enter the indices of two cards (0 to %d): ", size - 1);
+        if (scanf("%d %d", &firstIndex, &secondIndex) != 2 || 
+            firstIndex < 0 || firstIndex >= size || secondIndex < 0 || secondIndex >= size ||
+            matched[firstIndex] || matched[secondIndex] || firstIndex == secondIndex) {
+            printf("Invalid input or one/more indices are already matched. Try again.\n");
+            while (getchar() != '\n'); // Clear input buffer
+            continue;
+		}
+        // Increment attempts
+        attempts++;
+        // Find selected cards
+        struct Node* firstCard = head;
+        struct Node* secondCard = head;
+        for (int i = 0; i < firstIndex; i++) {
+            firstCard = firstCard->next;
+        }
+        for (int i = 0; i < secondIndex; i++) {
+            secondCard = secondCard->next;
+		}
+        // Check if the selected cards match
+        printf("You chose: [%d] [%d]\n", firstCard->data, secondCard->data);
+        if (firstCard->data == secondCard->data) {
+            printf("Congratulations! You found a pair!\n");
+            pairsFound++;
+            matched[firstIndex] = matched[secondIndex] = 1; // Mark them as matched
+        } else {
+            printf("Oops! They don't match. Try again.\n");
+		}
+        while (getchar() != '\n'); // Clear input buffer
+	}
+    printf("Congratulations! You completed the game in %d attempts!\n", attempts);
+    free(matched);
+}
+void freeList(struct Node* head) {
+    struct Node* current = head;
+    while (current != NULL) {
+        struct Node* temp = current;
+        current = current->next;
+        free(temp);
+    }
+}
+// Main function
+int main() {
+    // Create a linked list with numbers 1 to 10 (two occurrences of each number)
+    struct Node* head = NULL;
+    for (int i = 1; i <= 10; i++) {
+        insertAtEnd(&head, i);
+        insertAtEnd(&head, i);
+	}
+    // Shuffle the linked list
+    shuffle(&head);
+    // Play the memory matching game
+    playMemoryMatchingGame(head);
+    // Free memory allocated for the linked list
+    freeList(head);
+    return 0;
+}
+
+
+
+
+
